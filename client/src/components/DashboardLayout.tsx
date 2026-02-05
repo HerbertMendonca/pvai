@@ -26,7 +26,8 @@ import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
-import { CEOChatModal } from "./CEOChatModal";
+import { AgentSelectorModal, Agent } from "./AgentSelectorModal";
+import { AgentChatModal } from "./AgentChatModal";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Page 1", path: "/" },
@@ -112,7 +113,9 @@ function DashboardLayoutContent({
   const { state, toggleSidebar } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
-  const [ceoModalOpen, setCeoModalOpen] = useState(false);
+  const [agentSelectorOpen, setAgentSelectorOpen] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+  const [agentChatOpen, setAgentChatOpen] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
@@ -205,12 +208,12 @@ function DashboardLayoutContent({
 
           <SidebarFooter className="p-3 space-y-2">
             <Button
-              onClick={() => setCeoModalOpen(true)}
+              onClick={() => setAgentSelectorOpen(true)}
               className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg transition-all"
               size="sm"
             >
               <MessageCircle className="h-4 w-4 mr-2" />
-              <span>Falar com o Chefe</span>
+              <span>Falar com a Equipe IA</span>
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -241,7 +244,23 @@ function DashboardLayoutContent({
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarFooter>
-          <CEOChatModal open={ceoModalOpen} onOpenChange={setCeoModalOpen} />
+          <AgentSelectorModal
+            open={agentSelectorOpen}
+            onOpenChange={setAgentSelectorOpen}
+            onSelectAgent={(agent) => {
+              setSelectedAgent(agent);
+              setAgentChatOpen(true);
+            }}
+          />
+          <AgentChatModal
+            open={agentChatOpen}
+            onOpenChange={setAgentChatOpen}
+            agent={selectedAgent}
+            onBackClick={() => {
+              setAgentChatOpen(false);
+              setAgentSelectorOpen(true);
+            }}
+          />
         </Sidebar>
         <div
           className={`absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-primary/20 transition-colors ${isCollapsed ? "hidden" : ""}`}

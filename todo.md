@@ -110,10 +110,12 @@
 - [ ] Prepare GitHub repository
 - [ ] Final code review and cleanup
 
-## NEW FEATURE: "Falar com o Chefe" - CEO Chat
-- [x] Create CEO chat modal component with elegant design
-- [x] Add button to sidebar with icon and hover effects
-- [x] Implement chat message history and streaming responses
-- [ ] Connect to LLM for real-time AI responses
+## NEW FEATURE: "Falar com a Equipe IA" - Multi-Agent Chat
+- [x] Create agent selector modal with 11 agents
+- [x] Refactor CEO chat to generic agent chat system
+- [x] Add button to sidebar "Falar com a Equipe IA"
+- [x] Implement agent-specific styling and descriptions
+- [x] Add back button to return to agent selection
+- [ ] Connect to n8n webhooks for real LLM responses
 - [ ] Add message persistence to database
 - [ ] Test chat functionality end-to-end
