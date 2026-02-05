@@ -171,6 +171,36 @@ export const appRouter = router({
           };
         }
       }),
+
+    ceoChat: protectedProcedure
+      .input(z.object({
+        mensagem: z.string(),
+        historico: z.array(z.object({
+          role: z.enum(["user", "assistant"]),
+          content: z.string(),
+        })).optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        // CEO Chat - Direct conversation with the AI
+        try {
+          // For now, return a contextual placeholder response
+          // In production, integrate with your LLM service (OpenAI, Claude, etc.)
+          const ceoResponse = `Como CEO, analisei sua pergunta: "${input.mensagem}". Com base nos dados disponíveis, recomendo focar em otimizar os processos críticos e monitorar os KPIs em tempo real.`;
+          
+          return {
+            success: true,
+            resposta: ceoResponse,
+            tokensUsados: 150,
+          };
+        } catch (error) {
+          console.error("CEO Chat Error:", error);
+          return {
+            success: false,
+            resposta: "Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente.",
+            tokensUsados: 0,
+          };
+        }
+      }),
   }),
 
   // ============================================================================
