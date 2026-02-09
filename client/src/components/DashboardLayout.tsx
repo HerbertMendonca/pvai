@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, MessageCircle } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Settings, MessageCircle, AlertTriangle, Activity, Building2, Users, ChevronDown, ChevronRight } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -30,8 +30,26 @@ import { AgentSelectorModal, Agent } from "./AgentSelectorModal";
 import { AgentChatModal } from "./AgentChatModal";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Page 1", path: "/" },
-  { icon: Users, label: "Page 2", path: "/some-path" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+  { icon: MessageCircle, label: "WhatsApp", path: "/whatsapp" },
+  { 
+    icon: Building2, 
+    label: "Setores", 
+    path: "/setores",
+    submenu: [
+      { label: "Cadastro", path: "/setores/cadastro" },
+      { label: "Cobran\u00e7a", path: "/setores/cobranca" },
+      { label: "Eventos", path: "/setores/eventos" },
+      { label: "Comercial", path: "/setores/comercial" },
+      { label: "Rastreamento", path: "/setores/rastreamento" },
+      { label: "Marketing", path: "/setores/marketing" },
+      { label: "Relacionamento", path: "/setores/relacionamento" },
+    ]
+  },
+  { icon: Users, label: "Equipe IA", path: "/equipe-ia" },
+  { icon: AlertTriangle, label: "Alertas", path: "/alerts" },
+  { icon: Activity, label: "Observabilidade", path: "/observability" },
+  { icon: Settings, label: "Configura\u00e7\u00f5es", path: "/configuration" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -115,6 +133,7 @@ function DashboardLayoutContent({
   const [isResizing, setIsResizing] = useState(false);
   const [agentSelectorOpen, setAgentSelectorOpen] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+  const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({});
   const [agentChatOpen, setAgentChatOpen] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const activeMenuItem = menuItems.find(item => item.path === location);
@@ -174,10 +193,8 @@ function DashboardLayoutContent({
                 <PanelLeft className="h-4 w-4 text-muted-foreground" />
               </button>
               {!isCollapsed ? (
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="font-semibold tracking-tight truncate">
-                    Navigation
-                  </span>
+                <div className="flex items-center gap-2 min-w-0 px-2">
+                  <img src="https://s3.nex1brasil.com/whatsapp/pvai.png" alt="PV.ai" className="h-10 object-contain" />
                 </div>
               ) : null}
             </div>
@@ -186,21 +203,68 @@ function DashboardLayoutContent({
           <SidebarContent className="gap-0">
             <SidebarMenu className="px-2 py-1">
               {menuItems.map(item => {
-                const isActive = location === item.path;
+                const hasSubmenu = item.submenu && item.submenu.length > 0;
+                const isActive = location === item.path || (hasSubmenu && item.submenu.some((sub: any) => location === sub.path));
+                const isSubmenuActive = hasSubmenu && item.submenu.some((sub: any) => location === sub.path);
+                const isOpen = openSubmenus[item.path] || isSubmenuActive;
+
+                if (!hasSubmenu) {
+                  return (
+                    <SidebarMenuItem key={item.path}>
+                      <SidebarMenuButton
+                        isActive={isActive}
+                        onClick={() => setLocation(item.path)}
+                        tooltip={item.label}
+                        className={`h-10 transition-all font-normal`}
+                      >
+                        <item.icon
+                          className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
+                        />
+                        <span>{item.label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                }
+
                 return (
-                  <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton
-                      isActive={isActive}
-                      onClick={() => setLocation(item.path)}
-                      tooltip={item.label}
-                      className={`h-10 transition-all font-normal`}
-                    >
-                      <item.icon
-                        className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
-                      />
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  <div key={item.path}>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton
+                        isActive={isSubmenuActive}
+                        onClick={() => setOpenSubmenus(prev => ({ ...prev, [item.path]: !prev[item.path] }))}
+                        tooltip={item.label}
+                        className={`h-10 transition-all font-normal`}
+                      >
+                        <item.icon
+                          className={`h-4 w-4 ${isSubmenuActive ? "text-primary" : ""}`}
+                        />
+                        <span>{item.label}</span>
+                        {!isCollapsed && (
+                          isOpen ? <ChevronDown className="h-4 w-4 ml-auto" /> : <ChevronRight className="h-4 w-4 ml-auto" />
+                        )}
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    {isOpen && !isCollapsed && (
+                      <div className="ml-6 mt-1 mb-2 space-y-1">
+                        {item.submenu.map((subItem: any) => {
+                          const isSubActive = location === subItem.path;
+                          return (
+                            <button
+                              key={subItem.path}
+                              onClick={() => setLocation(subItem.path)}
+                              className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors ${
+                                isSubActive
+                                  ? "bg-accent text-accent-foreground font-medium"
+                                  : "text-muted-foreground hover:bg-accent/50"
+                              }`}
+                            >
+                              {subItem.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </SidebarMenu>

@@ -13,6 +13,19 @@ export function useAuth(options?: UseAuthOptions) {
     options ?? {};
   const utils = trpc.useUtils();
 
+  // Mock user for development preview
+  const isDev = import.meta.env.DEV;
+  if (isDev) {
+    return {
+      user: { id: 1, name: "Demo User", email: "demo@pv.ai", role: "admin" },
+      loading: false,
+      error: null,
+      isAuthenticated: true,
+      refresh: () => Promise.resolve({ data: null }),
+      logout: async () => {},
+    };
+  }
+
   const meQuery = trpc.auth.me.useQuery(undefined, {
     retry: false,
     refetchOnWindowFocus: false,

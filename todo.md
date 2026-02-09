@@ -1,4 +1,4 @@
-# Torre de Controle IA - Project TODO
+# PV.ai - Project TODO
 
 ## Phase 1: Architecture & Planning
 - [x] Define multi-tenant data model
