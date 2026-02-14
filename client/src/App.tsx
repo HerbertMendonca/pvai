@@ -12,6 +12,7 @@ import Configuration from "./pages/Configuration";
 import Agendas from "./pages/Agendas";
 import NotFound from "./pages/NotFound";
 import EquipeIA from "./pages/EquipeIA";
+import Alerts from "./pages/Alerts";
 import Cadastro from "./pages/setores/Cadastro";
 import Cobranca from "./pages/setores/Cobranca";
 import Eventos from "./pages/setores/Eventos";
@@ -34,6 +35,7 @@ function Router() {
       <Route path="/setores/rastreamento" component={() => <DashboardLayout><Rastreamento /></DashboardLayout>} />
       <Route path="/setores/marketing" component={() => <DashboardLayout><Marketing /></DashboardLayout>} />
       <Route path="/setores/relacionamento" component={() => <DashboardLayout><Relacionamento /></DashboardLayout>} />
+      <Route path="/alerts" component={() => <DashboardLayout><Alerts /></DashboardLayout>} />
       <Route path="/observability" component={() => <DashboardLayout><Observability /></DashboardLayout>} />
       <Route path="/configuration" component={() => <DashboardLayout><Configuration /></DashboardLayout>} />
       <Route path="/agendas" component={() => <Agendas />} />

@@ -383,6 +383,7 @@ export const alertas = pgTable("alertas", {
   titulo: varchar("titulo", { length: 255 }).notNull(),
   descricao: text("descricao"),
   origem: varchar("origem", { length: 100 }), // qual agente ou sistema gerou
+  setor: varchar("setor", { length: 100 }), // comercial, financeiro, eventos, etc.
   dados_contexto: json("dados_contexto").$type<Record<string, any>>(),
   lido: boolean("lido").default(false),
   resolvido: boolean("resolvido").default(false),

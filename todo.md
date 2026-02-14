@@ -75,12 +75,13 @@
 - [ ] Create workflow status monitoring
 
 ## Phase 10: Alert System
-- [ ] Create alert configuration interface
-- [ ] Implement anomaly detection alerts
+- [x] Create alert central interface (/alerts)
+- [x] Implement sector-based filtering (Comercial, Financeiro, etc.)
+- [x] Add alert management (mark as read, resolve)
+- [ ] Implement real-time anomaly detection alerts
 - [ ] Add risk detection alerts
 - [ ] Create critical event alerts
 - [ ] Implement owner notification system
-- [ ] Add alert history and management
 - [ ] Create alert templates for different scenarios
 
 ## Phase 11: Report Export

@@ -5,6 +5,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { configRouter } from "./routers/config";
 import { chatRouter } from "./routers/chat";
 import { agendasRouter } from "./routers/agendas";
+import { alertsRouter } from "./routers/alerts";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 
 export const appRouter = router({
@@ -12,6 +13,7 @@ export const appRouter = router({
   configuration: configRouter,
   chat: chatRouter,
   agendas: agendasRouter,
+  alerts: alertsRouter,
   
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
