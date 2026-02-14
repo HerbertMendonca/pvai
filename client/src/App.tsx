@@ -9,6 +9,7 @@ import Agents from "./pages/Agents";
 import WhatsApp from "./pages/WhatsApp";
 import Observability from "./pages/Observability";
 import Configuration from "./pages/Configuration";
+import Agendas from "./pages/Agendas";
 import NotFound from "./pages/NotFound";
 import EquipeIA from "./pages/EquipeIA";
 import Cadastro from "./pages/setores/Cadastro";
@@ -35,6 +36,7 @@ function Router() {
       <Route path="/setores/relacionamento" component={() => <DashboardLayout><Relacionamento /></DashboardLayout>} />
       <Route path="/observability" component={() => <DashboardLayout><Observability /></DashboardLayout>} />
       <Route path="/configuration" component={() => <DashboardLayout><Configuration /></DashboardLayout>} />
+      <Route path="/agendas" component={() => <Agendas />} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

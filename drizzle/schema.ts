@@ -430,3 +430,20 @@ export const agent_execution_logs = pgTable("agent_execution_logs", {
   empresaIdx: index("agent_execution_logs_empresa_idx").on(table.id_empresa),
   agentIdx: index("agent_execution_logs_agent_idx").on(table.agent_id),
 }));
+
+// ============================================================================
+// AGENDAMENTOS - COM MULTI-TENANCY
+// ============================================================================
+
+export const agendas = pgTable("agendas", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  id_empresa: integer("id_empresa").notNull().references(() => empresas.id, { onDelete: "cascade" }),
+  nome: varchar("nome", { length: 255 }).notNull(),
+  descricao: text("descricao"),
+  cor: varchar("cor", { length: 7 }).default("#3b82f6"), // Cor hexadecimal para identificação visual
+  ativo: boolean("ativo").default(true),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  empresaIdx: index("agendas_empresa_idx").on(table.id_empresa),
+}));

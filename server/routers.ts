@@ -4,12 +4,14 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { configRouter } from "./routers/config";
 import { chatRouter } from "./routers/chat";
+import { agendasRouter } from "./routers/agendas";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 
 export const appRouter = router({
   system: systemRouter,
   configuration: configRouter,
   chat: chatRouter,
+  agendas: agendasRouter,
   
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),

@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Settings, MessageCircle, AlertTriangle, Activity, Building2, Users, ChevronDown, ChevronRight } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Settings, MessageCircle, AlertTriangle, Activity, Building2, Users, ChevronDown, ChevronRight, Calendar } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -32,6 +32,7 @@ import { AgentChatModal } from "./AgentChatModal";
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
   { icon: MessageCircle, label: "WhatsApp", path: "/whatsapp" },
+  { icon: Calendar, label: "Agendas", path: "/agendas" },
   { 
     icon: Building2, 
     label: "Setores", 
