@@ -102,7 +102,7 @@ export default function Cadastro() {
               <div>
                 <p className="text-sm font-medium text-gray-500 uppercase">Pendências Doc.</p>
                 <h3 className="text-2xl font-bold text-gray-900">28</h3>
-                <p className="text-xs text-amber-600 mt-1">12 casos críticos (> 5 dias)</p>
+                <p className="text-xs text-amber-600 mt-1">12 casos críticos ({">"} 5 dias)</p>
               </div>
               <FileWarning className="w-8 h-8 text-amber-500 opacity-20" />
             </div>
@@ -273,7 +273,7 @@ export default function Cadastro() {
                 <div className="flex gap-3 p-2 bg-amber-50 rounded-md">
                   <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
                   <p className="text-xs text-amber-800">
-                    <strong>Recadastramento:</strong> 15% da base não atualiza dados há > 12 meses.
+                    <strong>Recadastramento:</strong> 15% da base não atualiza dados há {">"} 12 meses.
                   </p>
                 </div>
                 <div className="flex gap-3 p-2 bg-blue-50 rounded-md">
