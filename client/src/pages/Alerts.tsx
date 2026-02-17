@@ -3,8 +3,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, AlertTriangle, Info, CheckCircle2, Filter, RefreshCw, Bell } from "lucide-react";
-import { trpc } from "@/lib/trpc";
-import { useAuth } from "@/_core/hooks/useAuth";
 
 const SETORES = [
   { id: "todos", label: "Todos os Setores" },
@@ -16,23 +14,93 @@ const SETORES = [
   { id: "marketing", label: "Marketing" },
 ];
 
+// Mock de dados inicial
+const INITIAL_MOCK_ALERTS = [
+  {
+    id: 1,
+    titulo: "Sinistralidade Crítica",
+    descricao: "O índice de sinistralidade atingiu 27.45%, ultrapassando o limite de alerta de 25%.",
+    severidade: "critico",
+    setor: "financeiro",
+    origem: "Sistema",
+    lido: false,
+    resolvido: false,
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 2,
+    titulo: "Inadimplência Elevada",
+    descricao: "Volume de mensalidades em atraso (>30 dias) ultrapassou R$ 85.000,00.",
+    severidade: "critico",
+    setor: "financeiro",
+    origem: "Financeiro",
+    lido: false,
+    resolvido: false,
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 3,
+    titulo: "Atraso em Vistorias de Adesão",
+    descricao: "15 veículos aguardando vistoria há mais de 48 horas.",
+    severidade: "aviso",
+    setor: "comercial",
+    origem: "Comercial",
+    lido: false,
+    resolvido: false,
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 4,
+    titulo: "Suspeita de Fraude em Sinistro",
+    descricao: "O sinistro #8942 apresenta inconsistências no laudo pericial.",
+    severidade: "critico",
+    setor: "eventos",
+    origem: "Sindicância",
+    lido: true,
+    resolvido: false,
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 5,
+    titulo: "Manutenção de Rastreadores",
+    descricao: "45 dispositivos de rastreamento reportando bateria baixa ou sem sinal.",
+    severidade: "aviso",
+    setor: "rastreamento",
+    origem: "IoT Monitor",
+    lido: false,
+    resolvido: false,
+    created_at: new Date().toISOString()
+  },
+  {
+    id: 6,
+    titulo: "Pico de Cancelamentos",
+    descricao: "Aumento de 12% nos pedidos de cancelamento nas últimas 24 horas.",
+    severidade: "aviso",
+    setor: "marketing",
+    origem: "Churn Analytics",
+    lido: false,
+    resolvido: false,
+    created_at: new Date().toISOString()
+  }
+];
+
 export default function Alerts() {
-  const { user } = useAuth();
   const [selectedSetor, setSelectedSetor] = useState("todos");
+  const [activeAlerts, setActiveAlerts] = useState(INITIAL_MOCK_ALERTS);
   
-  const alertsQuery = trpc.alerts.getAll.useQuery({
-    idEmpresa: user?.id_empresa || 1,
-    setor: selectedSetor,
-    limit: 50,
-  });
+  const handleResolve = (id: number) => {
+    // Remove o alerta da lista visual imediatamente ao clicar em resolvido
+    setActiveAlerts(prev => prev.filter(alerta => alerta.id !== id));
+  };
 
-  const markAsReadMutation = trpc.alerts.markAsRead.useMutation({
-    onSuccess: () => alertsQuery.refetch(),
-  });
+  const handleRefresh = () => {
+    // Simula recarregamento de alertas (restaura os mocks para fins de demonstração)
+    setActiveAlerts(INITIAL_MOCK_ALERTS);
+  };
 
-  const resolveMutation = trpc.alerts.resolve.useMutation({
-    onSuccess: () => alertsQuery.refetch(),
-  });
+  const displayData = selectedSetor === "todos" 
+    ? activeAlerts 
+    : activeAlerts.filter(a => a.setor === selectedSetor);
 
   const getSeveridadeIcon = (severidade: string) => {
     switch (severidade) {
@@ -57,7 +125,7 @@ export default function Alerts() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -65,15 +133,14 @@ export default function Alerts() {
             <Bell className="w-8 h-8 text-primary" />
             Central de Alertas
           </h1>
-          <p className="text-gray-600 mt-1">Monitore anomalias e eventos críticos por setor</p>
+          <p className="text-gray-600 mt-1">Monitore anomalias e eventos críticos organizados por setor</p>
         </div>
         <Button
           variant="outline"
-          onClick={() => alertsQuery.refetch()}
           className="gap-2"
-          disabled={alertsQuery.isFetching}
+          onClick={handleRefresh}
         >
-          <RefreshCw className={`w-4 h-4 ${alertsQuery.isFetching ? "animate-spin" : ""}`} />
+          <RefreshCw className="w-4 h-4" />
           Atualizar
         </Button>
       </div>
@@ -95,10 +162,8 @@ export default function Alerts() {
 
       {/* Alerts List */}
       <div className="grid gap-4">
-        {alertsQuery.isLoading ? (
-          <div className="py-12 text-center text-gray-500">Carregando alertas...</div>
-        ) : alertsQuery.data && alertsQuery.data.length > 0 ? (
-          alertsQuery.data.map((alerta) => (
+        {displayData.length > 0 ? (
+          displayData.map((alerta) => (
             <Card key={alerta.id} className={`${getSeveridadeColor(alerta.severidade)} transition-all hover:shadow-md`}>
               <CardContent className="p-4">
                 <div className="flex items-start gap-4">
@@ -128,31 +193,15 @@ export default function Alerts() {
                     </div>
                     
                     <div className="flex justify-end gap-2 mt-4">
-                      {!alerta.lido && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => markAsReadMutation.mutate({ id: alerta.id })}
-                        >
-                          Marcar como lido
-                        </Button>
-                      )}
-                      {!alerta.resolvido ? (
-                        <Button 
-                          variant="default" 
-                          size="sm"
-                          className="bg-green-600 hover:bg-green-700 text-white"
-                          onClick={() => resolveMutation.mutate({ id: alerta.id, userId: user?.id || 1 })}
-                        >
-                          <CheckCircle2 className="w-4 h-4 mr-2" />
-                          Resolver
-                        </Button>
-                      ) : (
-                        <div className="flex items-center text-green-700 text-sm font-medium px-2 py-1 bg-green-100 rounded">
-                          <CheckCircle2 className="w-4 h-4 mr-2" />
-                          Resolvido
-                        </div>
-                      )}
+                      <Button 
+                        variant="default" 
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                        onClick={() => handleResolve(alerta.id)}
+                      >
+                        <CheckCircle2 className="w-4 h-4 mr-2" />
+                        Resolvido
+                      </Button>
                     </div>
                   </div>
                 </div>
