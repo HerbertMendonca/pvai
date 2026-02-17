@@ -15,7 +15,8 @@
 - [x] Push migrations to Supabase
 
 ## Phase 3: Authentication & Users
-- [ ] Integrate Manus OAuth
+- [ ] Integrate Supabase Auth (Migration from Manus OAuth)
+- [ ] Configure Supabase Client and Environment Variables
 - [ ] Implement user profile management
 - [ ] Add role-based access control (RBAC)
 - [ ] Create user settings page
