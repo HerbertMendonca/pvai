@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "server/_core/index.ts"
+    },
+    {
+      "source": "/trpc/(.*)",
+      "destination": "server/_core/index.ts"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": { "distDir": "dist/client" }
+    },
+    {
+      "src": "server/_core/index.ts",
+      "use": "@vercel/node"
+    }
+  ]
+}
