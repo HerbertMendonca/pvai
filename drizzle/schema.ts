@@ -51,7 +51,7 @@ export const statusEmpresaEnum = pgEnum("status_empresa", ["ativa", "suspensa", 
 // ============================================================================
 
 export const empresas = pgTable("empresas", {
-  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  id: bigint("id", { mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
   nome: varchar("nome", { length: 255 }).notNull(),
   cnpj: varchar("cnpj", { length: 18 }).notNull().unique(),
   email: varchar("email", { length: 255 }).notNull(),

@@ -22,7 +22,19 @@ import {
 } from "../drizzle/schema";
 
 // Create database connection
-const client = postgres(process.env.DATABASE_URL || "");
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  console.error("DATABASE_URL is not set in environment variables.");
+  throw new Error("DATABASE_URL is not set.");
+}
+console.log("Attempting to connect to database with URL:", connectionString);
+let client;
+try {
+  client = postgres(connectionString);
+} catch (error) {
+  console.error("Failed to initialize postgres client:", error);
+  throw error;
+}
 export const db = drizzle(client);
 
 // Export all tables for easy access

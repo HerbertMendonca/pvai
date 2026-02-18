@@ -8,7 +8,9 @@ import { agendasRouter } from "./routers/agendas";
 import { alertsRouter } from "./routers/alerts";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 
+
 export const appRouter = router({
+
   system: systemRouter,
   configuration: configRouter,
   chat: chatRouter,

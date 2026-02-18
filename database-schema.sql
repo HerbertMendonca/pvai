@@ -9,6 +9,8 @@
 CREATE TABLE IF NOT EXISTS empresas (
   id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   nome VARCHAR(255) NOT NULL,
+  cnpj VARCHAR(18) NOT NULL UNIQUE,
+  email VARCHAR(255) NOT NULL,
   descricao TEXT,
   nicho VARCHAR(100) NOT NULL, -- e.g., "seguros", "ecommerce", "saas", "agencia"
   logo_url VARCHAR(500),
