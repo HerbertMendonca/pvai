@@ -20,25 +20,42 @@ import Comercial from "./pages/setores/Comercial";
 import Rastreamento from "./pages/setores/Rastreamento";
 import Marketing from "./pages/setores/Marketing";
 import Relacionamento from "./pages/setores/Relacionamento";
+import Login from "./pages/Login";
+import { useAuth } from "./_core/hooks/useAuth";
+
+function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">Carregando...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <Login />;
+  }
+
+  return <Component />;
+}
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={() => <DashboardLayout><Dashboard /></DashboardLayout>} />
-      <Route path="/agents" component={() => <DashboardLayout><Agents /></DashboardLayout>} />
-      <Route path="/whatsapp" component={() => <DashboardLayout><WhatsApp /></DashboardLayout>} />
-      <Route path="/equipe-ia" component={() => <DashboardLayout><EquipeIA /></DashboardLayout>} />
-      <Route path="/setores/cadastro" component={() => <DashboardLayout><Cadastro /></DashboardLayout>} />
-      <Route path="/setores/cobranca" component={() => <DashboardLayout><Cobranca /></DashboardLayout>} />
-      <Route path="/setores/eventos" component={() => <DashboardLayout><Eventos /></DashboardLayout>} />
-      <Route path="/setores/comercial" component={() => <DashboardLayout><Comercial /></DashboardLayout>} />
-      <Route path="/setores/rastreamento" component={() => <DashboardLayout><Rastreamento /></DashboardLayout>} />
-      <Route path="/setores/marketing" component={() => <DashboardLayout><Marketing /></DashboardLayout>} />
-      <Route path="/setores/relacionamento" component={() => <DashboardLayout><Relacionamento /></DashboardLayout>} />
-      <Route path="/alerts" component={() => <DashboardLayout><Alerts /></DashboardLayout>} />
-      <Route path="/observability" component={() => <DashboardLayout><Observability /></DashboardLayout>} />
-      <Route path="/configuration" component={() => <DashboardLayout><Configuration /></DashboardLayout>} />
-      <Route path="/agendas" component={() => <Agendas />} />
+      <Route path="/login" component={Login} />
+      <Route path="/" component={() => <DashboardLayout><ProtectedRoute component={Dashboard} /></DashboardLayout>} />
+      <Route path="/agents" component={() => <DashboardLayout><ProtectedRoute component={Agents} /></DashboardLayout>} />
+      <Route path="/whatsapp" component={() => <DashboardLayout><ProtectedRoute component={WhatsApp} /></DashboardLayout>} />
+      <Route path="/equipe-ia" component={() => <DashboardLayout><ProtectedRoute component={EquipeIA} /></DashboardLayout>} />
+      <Route path="/setores/cadastro" component={() => <DashboardLayout><ProtectedRoute component={Cadastro} /></DashboardLayout>} />
+      <Route path="/setores/cobranca" component={() => <DashboardLayout><ProtectedRoute component={Cobranca} /></DashboardLayout>} />
+      <Route path="/setores/eventos" component={() => <DashboardLayout><ProtectedRoute component={Eventos} /></DashboardLayout>} />
+      <Route path="/setores/comercial" component={() => <DashboardLayout><ProtectedRoute component={Comercial} /></DashboardLayout>} />
+      <Route path="/setores/rastreamento" component={() => <DashboardLayout><ProtectedRoute component={Rastreamento} /></DashboardLayout>} />
+      <Route path="/setores/marketing" component={() => <DashboardLayout><ProtectedRoute component={Marketing} /></DashboardLayout>} />
+      <Route path="/setores/relacionamento" component={() => <DashboardLayout><ProtectedRoute component={Relacionamento} /></DashboardLayout>} />
+      <Route path="/alerts" component={() => <DashboardLayout><ProtectedRoute component={Alerts} /></DashboardLayout>} />
+      <Route path="/observability" component={() => <DashboardLayout><ProtectedRoute component={Observability} /></DashboardLayout>} />
+      <Route path="/configuration" component={() => <DashboardLayout><ProtectedRoute component={Configuration} /></DashboardLayout>} />
+      <Route path="/agendas" component={() => <ProtectedRoute component={Agendas} />} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
