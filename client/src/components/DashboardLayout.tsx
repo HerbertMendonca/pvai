@@ -173,7 +173,7 @@ function DashboardLayoutContent({
               </button>
               {!isCollapsed ? (
                 <div className="flex items-center gap-2 min-w-0 px-2">
-                  <img src="https://s3.nex1brasil.com/whatsapp/pvai.png" alt="PV.ai" className="h-10 object-contain" />
+                  <img src="https://s3.nex1brasil.com/typebot/public%2FLOGO%20PV.ai.png" alt="PV.ai" className="h-10 object-contain" />
                 </div>
               ) : null}
             </div>
