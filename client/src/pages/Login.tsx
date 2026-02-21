@@ -47,7 +47,6 @@ export default function Login() {
               alt="PV.ai" 
               className="h-16 mx-auto mb-4 object-contain"
             />
-            <h1 className="text-2xl font-bold text-gray-900">PV.ai</h1>
             <p className="text-gray-600 mt-2">Sistema de BI para Proteção Veicular</p>
           </div>
 

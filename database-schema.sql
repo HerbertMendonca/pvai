@@ -1,5 +1,4 @@
 -- Torre de Controle IA - Generic Multi-Tenant Database Schema
--- This schema is designed to work with ANY business vertical
 
 -- ============================================================================
 -- CORE MULTI-TENANT TABLES
@@ -20,6 +19,53 @@ CREATE TABLE IF NOT EXISTS empresas (
   criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- ============================================================================
+-- AUTHENTICATION TABLES
+-- ============================================================================
+
+-- Users (linked to Supabase Auth)
+CREATE TABLE IF NOT EXISTS users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id_empresa BIGINT REFERENCES empresas(id),
+  email VARCHAR(255) NOT NULL UNIQUE,
+  name VARCHAR(255),
+  role VARCHAR(50) DEFAULT 'operador', -- 'super_admin', 'admin', 'gestor', 'operador'
+  ativo BOOLEAN DEFAULT true,
+  criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Function to get user role (for RLS)
+CREATE OR REPLACE FUNCTION get_user_role(user_id UUID) RETURNS TEXT AS $$
+  SELECT role FROM users WHERE id = user_id
+$$ LANGUAGE SQL SECURITY DEFINER;
+
+-- RLS for users table
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view their own profile" ON users
+  FOR SELECT USING (auth.uid() = id);
+
+CREATE POLICY "Users can update their own profile" ON users
+  FOR UPDATE USING (auth.uid() = id);
+
+CREATE POLICY "Admins can view all users" ON users
+  FOR SELECT USING (get_user_role(auth.uid()) = 'admin' OR get_user_role(auth.uid()) = 'super_admin');
+
+CREATE POLICY "Admins can create users" ON users
+  FOR INSERT WITH CHECK (get_user_role(auth.uid()) = 'admin' OR get_user_role(auth.uid()) = 'super_admin');
+
+CREATE POLICY "Admins can update users" ON users
+  FOR UPDATE USING (get_user_role(auth.uid()) = 'admin' OR get_user_role(auth.uid()) = 'super_admin');
+
+CREATE POLICY "Admins can delete users" ON users
+  FOR DELETE USING (get_user_role(auth.uid()) = 'admin' OR get_user_role(auth.uid()) = 'super_admin');
+
+
+
+
+-- This schema is designed to work with ANY business vertical
 
 -- Departamentos (genéricos para qualquer empresa)
 CREATE TABLE IF NOT EXISTS departamentos (
