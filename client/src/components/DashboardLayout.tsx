@@ -337,3 +337,5 @@ function DashboardLayoutContent({
 }
 
 
+
+export default DashboardLayout;
