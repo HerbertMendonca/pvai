@@ -39,7 +39,7 @@ const menuItems = [
     path: "/setores",
     submenu: [
       { label: "Cadastro", path: "/setores/cadastro" },
-      { label: "Cobran\u00e7a", path: "/setores/cobranca" },
+      { label: "Cobrança", path: "/setores/cobranca" },
       { label: "Eventos", path: "/setores/eventos" },
       { label: "Comercial", path: "/setores/comercial" },
       { label: "Rastreamento", path: "/setores/rastreamento" },
@@ -50,51 +50,13 @@ const menuItems = [
   { icon: Users, label: "Equipe IA", path: "/equipe-ia" },
   { icon: AlertTriangle, label: "Alertas", path: "/alerts" },
   { icon: Activity, label: "Observabilidade", path: "/observability" },
-  { icon: Settings, label: "Configura\u00e7\u00f5es", path: "/configuration" },
+  { icon: Settings, label: "Configurações", path: "/configuration" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
 const DEFAULT_WIDTH = 280;
 const MIN_WIDTH = 200;
 const MAX_WIDTH = 480;
-
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const [sidebarWidth, setSidebarWidth] = useState(() => {
-    const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
-    return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
-  });
-  const { loading } = useAuth();
-  const user = { id: 1, name: "Demo User", email: "demo@pv.ai", id_empresa: 1 };
-
-  useEffect(() => {
-    localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
-  }, [sidebarWidth]);
-
-  if (loading) {
-    return <DashboardLayoutSkeleton />
-  }
-
-  // Bypass de autenticação para visualização
-  const user_mock = { id: 1, name: "Demo User", email: "demo@pv.ai", id_empresa: 1 };
-
-  return (
-    <SidebarProvider
-      style={
-        {
-          "--sidebar-width": `${sidebarWidth}px`,
-        } as CSSProperties
-      }
-    >
-      <DashboardLayoutContent setSidebarWidth={setSidebarWidth}>
-        {children}
-      </DashboardLayoutContent>
-    </SidebarProvider>
-  );
-}
 
 type DashboardLayoutContentProps = {
   children: React.ReactNode;
@@ -127,7 +89,6 @@ function DashboardLayoutContent({
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizing) return;
-
       const sidebarLeft = sidebarRef.current?.getBoundingClientRect().left ?? 0;
       const newWidth = e.clientX - sidebarLeft;
       if (newWidth >= MIN_WIDTH && newWidth <= MAX_WIDTH) {
@@ -156,7 +117,7 @@ function DashboardLayoutContent({
 
   return (
     <>
-      <div className="relative" ref={sidebarRef}>
+      <div className="relative flex h-screen overflow-hidden" ref={sidebarRef}>
         <Sidebar
           collapsible="icon"
           className="border-r-0"
@@ -263,12 +224,12 @@ function DashboardLayoutContent({
                 <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-accent/50 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                   <Avatar className="h-9 w-9 border shrink-0">
                     <AvatarFallback className="text-xs font-medium">
-                      {user?.name?.charAt(0).toUpperCase()}
+                      {user?.name?.charAt(0).toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
                     <p className="text-sm font-medium truncate leading-none">
-                      {user?.name || "-"}
+                      {user?.name || "Usuário"}
                     </p>
                     <p className="text-xs text-muted-foreground truncate mt-1.5">
                       {user?.email || "-"}
@@ -314,8 +275,7 @@ function DashboardLayoutContent({
           style={{ zIndex: 50 }}
         />
       </div>
-
-      <SidebarInset>
+      <SidebarInset className="flex flex-col flex-1 overflow-hidden">
         {isMobile && (
           <div className="flex border-b h-14 items-center justify-between bg-background/95 px-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
             <div className="flex items-center gap-2">
@@ -330,12 +290,42 @@ function DashboardLayoutContent({
             </div>
           </div>
         )}
-        <main className="flex-1 p-4">{children}</main>
+        <main className="flex-1 overflow-y-auto p-4">{children}</main>
       </SidebarInset>
     </>
   );
 }
 
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
+    return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
+  });
+  const { loading } = useAuth();
 
+  useEffect(() => {
+    localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
+  }, [sidebarWidth]);
 
-export default DashboardLayout;
+  if (loading) {
+    return <DashboardLayoutSkeleton />
+  }
+
+  return (
+    <SidebarProvider
+      style={
+        {
+          "--sidebar-width": `${sidebarWidth}px`,
+        } as CSSProperties
+      }
+    >
+      <DashboardLayoutContent setSidebarWidth={setSidebarWidth}>
+        {children}
+      </DashboardLayoutContent>
+    </SidebarProvider>
+  );
+}
