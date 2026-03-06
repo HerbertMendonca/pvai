@@ -6,7 +6,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import DashboardLayout from "./components/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
 import Agents from "./pages/Agents";
-import WhatsApp from "./pages/WhatsApp";
+import WhatsAppDispatcher from "./pages/WhatsAppDispatcher";
 import Observability from "./pages/Observability";
 import Configuration from "./pages/Configuration";
 import Agendas from "./pages/Agendas";
@@ -20,6 +20,7 @@ import Comercial from "./pages/setores/Comercial";
 import Rastreamento from "./pages/setores/Rastreamento";
 import Marketing from "./pages/setores/Marketing";
 import Relacionamento from "./pages/setores/Relacionamento";
+import Kanban from "./pages/Kanban";
 import Login from "./pages/Login";
 import { useAuth } from "./_core/hooks/useAuth";
 
@@ -43,7 +44,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/" component={() => <DashboardLayout><ProtectedRoute component={Dashboard} /></DashboardLayout>} />
       <Route path="/agents" component={() => <DashboardLayout><ProtectedRoute component={Agents} /></DashboardLayout>} />
-      <Route path="/whatsapp" component={() => <DashboardLayout><ProtectedRoute component={WhatsApp} /></DashboardLayout>} />
+      <Route path="/whatsapp" component={() => <DashboardLayout><ProtectedRoute component={WhatsAppDispatcher} /></DashboardLayout>} />
       <Route path="/equipe-ia" component={() => <DashboardLayout><ProtectedRoute component={EquipeIA} /></DashboardLayout>} />
       <Route path="/setores/cadastro" component={() => <DashboardLayout><ProtectedRoute component={Cadastro} /></DashboardLayout>} />
       <Route path="/setores/cobranca" component={() => <DashboardLayout><ProtectedRoute component={Cobranca} /></DashboardLayout>} />
@@ -56,6 +57,7 @@ function Router() {
       <Route path="/observability" component={() => <DashboardLayout><ProtectedRoute component={Observability} /></DashboardLayout>} />
       <Route path="/configuration" component={() => <DashboardLayout><ProtectedRoute component={Configuration} /></DashboardLayout>} />
       <Route path="/agendas" component={() => <ProtectedRoute component={Agendas} />} />
+      <Route path="/kanban" component={() => <DashboardLayout><ProtectedRoute component={Kanban} /></DashboardLayout>} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

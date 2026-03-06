@@ -14,6 +14,7 @@ const SETORES = [
   { id: "rastreamento", label: "Rastreamento" },
   { id: "cadastro", label: "Cadastro" },
   { id: "marketing", label: "Marketing" },
+  { id: "cobranca", label: "Cobrança" },
 ];
 
 const INITIAL_MOCK_ALERTS = [

@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Settings, MessageCircle, AlertTriangle, Activity, Building2, Users, ChevronDown, ChevronRight, Calendar } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Settings, MessageCircle, AlertTriangle, Activity, Building2, Users, ChevronDown, ChevronRight, Calendar, Trello } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -50,6 +50,7 @@ const menuItems = [
   { icon: Users, label: "Equipe IA", path: "/equipe-ia" },
   { icon: AlertTriangle, label: "Alertas", path: "/alerts" },
   { icon: Activity, label: "Observabilidade", path: "/observability" },
+  { icon: Trello, label: "Kanban", path: "/kanban" },
   { icon: Settings, label: "Configurações", path: "/configuration" },
 ];
 

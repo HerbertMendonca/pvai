@@ -105,9 +105,9 @@ export default function EquipeIA() {
 
   return (
     <DashboardLayout>
-      <div className="flex h-[calc(100vh-4rem)] bg-slate-50/50 overflow-hidden">
+      <div className="flex h-[calc(100vh-4rem)] bg-slate-50/50 overflow-hidden gap-0">
         {/* Sidebar de Agentes - Compacta */}
-        <div className="w-72 border-r bg-white flex flex-col flex-shrink-0">
+        <div className="w-64 border-r bg-white flex flex-col flex-shrink-0">
           <div className="p-4 border-b space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
