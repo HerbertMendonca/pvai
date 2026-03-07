@@ -1,14 +1,51 @@
 import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { TrendingUp, Users, DollarSign, AlertCircle, Car, Shield, FileText, Loader } from "lucide-react";
+import { TrendingUp, TrendingDown, Users, DollarSign, AlertCircle, Car, Shield, FileText, Loader, Download } from "lucide-react";
 import { useDashboardStats } from "@/_core/hooks/useDashboardStats";
+import DashboardFilters, { DashboardFiltersState } from "@/components/DashboardFilters";
+import { exportDashboardKPIs, exportToCSV, exportToExcel } from "@/lib/exportData";
 
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
 
+const VariationBadge = ({ value }: { value: number }) => {
+  const isPositive = value >= 0;
+  const icon = isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />;
+  const color = isPositive ? "text-green-600" : "text-red-600";
+  
+  return (
+    <p className={`text-xs ${color} flex items-center gap-1 mt-1`}>
+      {icon}
+      {isPositive ? "+" : ""}{value.toFixed(1)}% vs mês anterior
+    </p>
+  );
+};
+
 export default function Dashboard() {
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [filters, setFilters] = useState<DashboardFiltersState | null>(null);
   const { stats, loading, error } = useDashboardStats();
+
+  const handleExportKPIs = (format: 'csv' | 'excel') => {
+    if (!stats) return;
+    const data = exportDashboardKPIs(stats);
+    if (format === 'csv') {
+      exportToCSV(data);
+    } else {
+      exportToExcel(data);
+    }
+  };
+
+  const handleFiltersChange = (newFilters: DashboardFiltersState) => {
+    setFilters(newFilters);
+    // TODO: Aplicar filtros aos dados do dashboard
+  };
+
+  const handleResetFilters = () => {
+    setFilters(null);
+    // TODO: Resetar filtros
+  };
 
   const chartDataCombined = useMemo(() => {
     if (!stats) return [];
@@ -16,20 +53,19 @@ export default function Dashboard() {
 
     stats.mensalidadesPorMes.forEach(m => {
       const entry = combined.get(m.mes) || { name: m.mes, receita: 0, sinistros: 0 };
-      entry.receita = m.pagas; // Usando count de pagas como proxy para receita por enquanto
+      entry.receita = m.pagas;
       combined.set(m.mes, entry);
     });
 
     stats.sinistrosPorMes.forEach(s => {
       const entry = combined.get(s.mes) || { name: s.mes, receita: 0, sinistros: 0 };
-      entry.sinistros = s.valor; // Usando valor de sinistros
+      entry.sinistros = s.valor;
       combined.set(s.mes, entry);
     });
 
     return Array.from(combined.values());
   }, [stats]);
 
-  // Mock para funil de conversão e distribuição de sinistros por tipo, pois não há dados diretos no hook ainda
   const funnelData = [
     { name: "Leads", value: 245, color: "#3b82f6" },
     { name: "Qualificados", value: 178, color: "#10b981" },
@@ -70,15 +106,40 @@ export default function Dashboard() {
           <h1 className="text-3xl font-bold text-gray-900">Dashboard - Proteção Veicular</h1>
           <p className="text-gray-600 mt-1">Visão geral de performance e KPIs</p>
         </div>
-        <input
-          type="date"
-          value={selectedDate.toISOString().split("T")[0]}
-          onChange={(e) => setSelectedDate(new Date(e.target.value))}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
+        <div className="flex items-center gap-3">
+          <input
+            type="date"
+            value={selectedDate.toISOString().split("T")[0]}
+            onChange={(e) => setSelectedDate(new Date(e.target.value))}
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <div className="flex gap-2">
+            <Button
+              onClick={() => handleExportKPIs('csv')}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <Download className="w-4 h-4" />
+              CSV
+            </Button>
+            <Button
+              onClick={() => handleExportKPIs('excel')}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <Download className="w-4 h-4" />
+              Excel
+            </Button>
+          </div>
+        </div>
       </div>
 
-      {/* Critical Alerts (usando dados do hook useAlerts, mas aqui é um mock para exemplo) */}
+      {/* Filters */}
+      <DashboardFilters onFiltersChange={handleFiltersChange} onReset={handleResetFilters} />
+
+      {/* Critical Alerts */}
       {stats.inadimplenciaRate > 10 || stats.sinistralidade > 25 ? (
         <Card className="border-red-200 bg-red-50">
           <CardHeader>
@@ -109,7 +170,7 @@ export default function Dashboard() {
         </Card>
       ) : null}
 
-      {/* KPI Cards */}
+      {/* KPI Cards com Variações */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -118,10 +179,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.associadosAtivos.toLocaleString("pt-BR")}</div>
-            <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
-              <TrendingUp className="w-3 h-3" />
-              {((stats.associadosAtivos / (stats.totalAssociados || 1)) * 100).toFixed(2)}% do total
-            </p>
+            <VariationBadge value={stats.variacaoAssociadosAtivos} />
           </CardContent>
         </Card>
 
@@ -132,9 +190,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalAssociados.toLocaleString("pt-BR")}</div>
-            <p className="text-xs text-gray-600 mt-1">
-              {stats.associadosCancelados} cancelados
-            </p>
+            <VariationBadge value={stats.variacaoAssociados} />
           </CardContent>
         </Card>
 
@@ -147,10 +203,7 @@ export default function Dashboard() {
             <div className="text-2xl font-bold">
               {stats.valorMensalidadesPagas.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
             </div>
-            <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
-              <TrendingUp className="w-3 h-3" />
-              {stats.mensalidadesPagas} mensalidades pagas
-            </p>
+            <VariationBadge value={stats.variacaoReceita} />
           </CardContent>
         </Card>
 
