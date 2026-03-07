@@ -1,46 +1,41 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { TrendingUp, Users, DollarSign, AlertCircle, Car, Shield, FileText } from "lucide-react";
+import { TrendingUp, Users, DollarSign, AlertCircle, Car, Shield, FileText, Loader } from "lucide-react";
+import { useDashboardStats } from "@/_core/hooks/useDashboardStats";
 
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"];
 
 export default function Dashboard() {
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const { stats, loading, error } = useDashboardStats();
 
-  // Mock data para proteção veicular
-  const kpiData = {
-    totalAssociadosAtivos: 2847,
-    totalVeiculosProtegidos: 3124,
-    receitaMensalidades: 1247580.50,
-    valorSinistrosPagos: 342150.00,
-    inadimplencia: 87450.25,
-    sinistrosAbertos: 23,
-    sinistrosPagos: 45,
-    atendimentosAbertos: 12,
-    atendimentosResolvidos: 156,
-    indiceSinistralidade: 27.45,
-  };
+  const chartDataCombined = useMemo(() => {
+    if (!stats) return [];
+    const combined = new Map<string, { name: string; receita: number; sinistros: number }>();
 
-  // Dados para gráfico de receita vs sinistros (últimos 7 dias)
-  const chartData = [
-    { name: "Seg", receita: 42500, sinistros: 12300 },
-    { name: "Ter", receita: 38900, sinistros: 15200 },
-    { name: "Qua", receita: 45200, sinistros: 18900 },
-    { name: "Qui", receita: 41800, sinistros: 14500 },
-    { name: "Sex", receita: 48300, sinistros: 21400 },
-    { name: "Sab", receita: 35600, sinistros: 9800 },
-    { name: "Dom", receita: 32100, sinistros: 8200 },
-  ];
+    stats.mensalidadesPorMes.forEach(m => {
+      const entry = combined.get(m.mes) || { name: m.mes, receita: 0, sinistros: 0 };
+      entry.receita = m.pagas; // Usando count de pagas como proxy para receita por enquanto
+      combined.set(m.mes, entry);
+    });
 
-  // Dados para funil de conversão
+    stats.sinistrosPorMes.forEach(s => {
+      const entry = combined.get(s.mes) || { name: s.mes, receita: 0, sinistros: 0 };
+      entry.sinistros = s.valor; // Usando valor de sinistros
+      combined.set(s.mes, entry);
+    });
+
+    return Array.from(combined.values());
+  }, [stats]);
+
+  // Mock para funil de conversão e distribuição de sinistros por tipo, pois não há dados diretos no hook ainda
   const funnelData = [
     { name: "Leads", value: 245, color: "#3b82f6" },
     { name: "Qualificados", value: 178, color: "#10b981" },
     { name: "Convertidos", value: 89, color: "#f59e0b" },
   ];
 
-  // Dados para distribuição de sinistros por tipo
   const sinistrosTypeData = [
     { name: "Colisão", value: 45 },
     { name: "Roubo/Furto", value: 28 },
@@ -49,12 +44,23 @@ export default function Dashboard() {
     { name: "Outros", value: 12 },
   ];
 
-  // Alertas críticos mockados
-  const alertasCriticos = [
-    { id: 1, titulo: "Sinistralidade Elevada", descricao: "Índice de sinistralidade acima de 25% no mês atual" },
-    { id: 2, titulo: "Inadimplência em Alta", descricao: "R$ 87.450,25 em mensalidades atrasadas" },
-    { id: 3, titulo: "Sinistros Pendentes", descricao: "23 sinistros aguardando análise há mais de 48h" },
-  ];
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen w-full">
+        <Loader className="w-8 h-8 animate-spin text-blue-600" />
+        <p className="ml-2 text-slate-600">Carregando dados do dashboard...</p>
+      </div>
+    );
+  }
+
+  if (error || !stats) {
+    return (
+      <div className="flex items-center justify-center h-screen w-full text-red-600">
+        <AlertCircle className="w-8 h-8" />
+        <p className="ml-2">Erro ao carregar dados do dashboard: {error?.message || "Desconhecido"}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-6">
@@ -72,8 +78,8 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Critical Alerts */}
-      {alertasCriticos.length > 0 && (
+      {/* Critical Alerts (usando dados do hook useAlerts, mas aqui é um mock para exemplo) */}
+      {stats.inadimplenciaRate > 10 || stats.sinistralidade > 25 ? (
         <Card className="border-red-200 bg-red-50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-red-700">
@@ -83,15 +89,25 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {alertasCriticos.map((alerta) => (
-                <div key={alerta.id} className="text-sm text-red-600">
-                  <strong>{alerta.titulo}:</strong> {alerta.descricao}
+              {stats.sinistralidade > 25 && (
+                <div className="text-sm text-red-600">
+                  <strong>Sinistralidade Elevada:</strong> Índice de sinistralidade ({stats.sinistralidade.toFixed(2)}%) acima da meta (25%) no mês atual.
                 </div>
-              ))}
+              )}
+              {stats.inadimplenciaRate > 10 && (
+                <div className="text-sm text-red-600">
+                  <strong>Inadimplência em Alta:</strong> Taxa de inadimplência ({stats.inadimplenciaRate.toFixed(2)}%) acima do limite de 10%.
+                </div>
+              )}
+              {stats.sinistrosAbertos > 0 && (
+                <div className="text-sm text-red-600">
+                  <strong>Sinistros Pendentes:</strong> {stats.sinistrosAbertos} sinistros aguardando análise.
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
-      )}
+      ) : null}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -101,24 +117,23 @@ export default function Dashboard() {
             <Users className="w-4 h-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{kpiData.totalAssociadosAtivos.toLocaleString('pt-BR')}</div>
+            <div className="text-2xl font-bold">{stats.associadosAtivos.toLocaleString("pt-BR")}</div>
             <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
               <TrendingUp className="w-3 h-3" />
-              +5.2% vs mês anterior
+              {((stats.associadosAtivos / (stats.totalAssociados || 1)) * 100).toFixed(2)}% do total
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Veículos Protegidos</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600">Total Associados</CardTitle>
             <Car className="w-4 h-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{kpiData.totalVeiculosProtegidos.toLocaleString('pt-BR')}</div>
-            <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
-              <TrendingUp className="w-3 h-3" />
-              +3.8% vs mês anterior
+            <div className="text-2xl font-bold">{stats.totalAssociados.toLocaleString("pt-BR")}</div>
+            <p className="text-xs text-gray-600 mt-1">
+              {stats.associadosCancelados} cancelados
             </p>
           </CardContent>
         </Card>
@@ -130,11 +145,11 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {kpiData.receitaMensalidades.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              {stats.valorMensalidadesPagas.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
             </div>
             <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
               <TrendingUp className="w-3 h-3" />
-              +2.1% vs mês anterior
+              {stats.mensalidadesPagas} mensalidades pagas
             </p>
           </CardContent>
         </Card>
@@ -146,10 +161,10 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {kpiData.valorSinistrosPagos.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              {stats.valorTotalPagoSinistros.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
             </div>
             <p className="text-xs text-gray-600 mt-1">
-              {kpiData.sinistrosPagos} sinistros no período
+              {stats.sinistrosPagos} sinistros no período
             </p>
           </CardContent>
         </Card>
@@ -160,10 +175,10 @@ export default function Dashboard() {
             <AlertCircle className="w-4 h-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{kpiData.indiceSinistralidade}%</div>
+            <div className="text-2xl font-bold">{stats.sinistralidade.toFixed(2)}%</div>
             <p className="text-xs text-red-600 flex items-center gap-1 mt-1">
               <AlertCircle className="w-3 h-3" />
-              Acima da meta (25%)
+              {stats.sinistralidade > 25 ? "Acima da meta (25%)" : "Dentro da meta"}
             </p>
           </CardContent>
         </Card>
@@ -173,21 +188,21 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Receita vs Sinistros</CardTitle>
-            <CardDescription>Últimos 7 dias</CardDescription>
+            <CardTitle>Receita vs Sinistros (Mensal)</CardTitle>
+            <CardDescription>Últimos 12 meses</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={chartData}>
+              <BarChart data={chartDataCombined}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip 
-                  formatter={(value: number) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  formatter={(value: number) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                 />
                 <Legend />
-                <Bar dataKey="receita" fill="#10b981" name="Receita" />
-                <Bar dataKey="sinistros" fill="#ef4444" name="Sinistros" />
+                <Bar dataKey="receita" fill="#10b981" name="Receita (Pagas)" />
+                <Bar dataKey="sinistros" fill="#ef4444" name="Sinistros (Valor Pago)" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -196,7 +211,7 @@ export default function Dashboard() {
         <Card>
           <CardHeader>
             <CardTitle>Distribuição de Sinistros por Tipo</CardTitle>
-            <CardDescription>Período atual</CardDescription>
+            <CardDescription>Período atual (Mock)</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -227,7 +242,7 @@ export default function Dashboard() {
         <Card>
           <CardHeader>
             <CardTitle>Funil de Conversão</CardTitle>
-            <CardDescription>Leads → Associados</CardDescription>
+            <CardDescription>Leads → Associados (Mock)</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -268,17 +283,17 @@ export default function Dashboard() {
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm">Sinistros Pendentes</span>
-                <span className="text-2xl font-bold text-orange-700">{kpiData.sinistrosAbertos}</span>
+                <span className="text-2xl font-bold text-orange-700">{stats.sinistrosAbertos}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm">Inadimplência</span>
                 <span className="text-lg font-semibold text-orange-700">
-                  {kpiData.inadimplencia.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  {stats.valorMensalidadesAtrasadas.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm">Fraudes Suspeitas</span>
-                <span className="text-2xl font-bold text-orange-700">3</span>
+                <span className="text-sm">Taxa de Inadimplência</span>
+                <span className="text-2xl font-bold text-orange-700">{stats.inadimplenciaRate.toFixed(2)}%</span>
               </div>
             </div>
           </CardContent>
@@ -294,16 +309,16 @@ export default function Dashboard() {
           <CardContent>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm">Em Aberto</span>
-                <span className="text-2xl font-bold text-blue-700">{kpiData.atendimentosAbertos}</span>
+                <span className="text-sm">Associados Ativos</span>
+                <span className="text-2xl font-bold text-blue-700">{stats.associadosAtivos}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm">Resolvidos Hoje</span>
-                <span className="text-2xl font-bold text-green-600">{kpiData.atendimentosResolvidos}</span>
+                <span className="text-sm">Associados Cancelados</span>
+                <span className="text-2xl font-bold text-red-600">{stats.associadosCancelados}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm">Tempo Médio</span>
-                <span className="text-lg font-semibold text-blue-700">2.3h</span>
+                <span className="text-sm">Churn Rate</span>
+                <span className="text-lg font-semibold text-blue-700">{stats.churnRate.toFixed(2)}%</span>
               </div>
             </div>
           </CardContent>
