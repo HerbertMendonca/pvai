@@ -1,17 +1,22 @@
-import { useState, useRef, useEffect } from "react";
+"use client";
+
+import { useState, useEffect, useRef } from "react";
 import { useAgents } from "@/_core/hooks/useAgents";
-import { Bot, Send, User, Search, MoreHorizontal, Paperclip, Smile, Maximize2, MessageSquare } from "lucide-react";
+import { useAgentChat } from "@/_core/hooks/useAgentChat";
+import { Bot, Send, User, Search, MoreHorizontal, Paperclip, Smile, Maximize2, MessageSquare, Loader } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 
-interface Message {
+interface Agent {
   id: string;
-  agentId: string;
-  sender: "user" | "agent";
-  content: string;
-  timestamp: Date;
+  name: string;
+  role: string;
+  description: string;
+  avatar: string;
+  color: string;
+  status: string;
 }
 
 const agentColors = [
@@ -29,12 +34,14 @@ const agentColors = [
 
 export default function EquipeIA() {
   const { agents: dbAgents, loading } = useAgents();
-  const [selectedAgent, setSelectedAgent] = useState<any>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [inputMessage, setInputMessage] = useState("");
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [conversationHistory, setConversationHistory] = useState<Record<string, Message[]>>({});
+  const [inputMessage, setInputMessage] = useState("");
+  const [conversationHistory, setConversationHistory] = useState<Record<string, any[]>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Hook para gerenciar chat com IA
+  const { messages, isLoading, error, sendMessage } = useAgentChat(selectedAgent?.id || "");
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -42,50 +49,30 @@ export default function EquipeIA() {
     }
   }, [messages]);
 
-  const handleSelectAgent = (agent: any) => {
+  const handleSelectAgent = (agent: Agent) => {
     setSelectedAgent(agent);
-    setMessages(conversationHistory[agent.id] || []);
+    setInputMessage("");
   };
 
   const handleSendMessage = async () => {
-    if (!inputMessage.trim() || !selectedAgent) return;
+    if (!inputMessage.trim() || !selectedAgent || isLoading) return;
 
-    const userMessage: Message = {
-      id: `msg-${Date.now()}`,
-      agentId: selectedAgent.id,
-      sender: "user",
-      content: inputMessage,
-      timestamp: new Date(),
-    };
-
-    const newMessages = [...messages, userMessage];
-    setMessages(newMessages);
+    const userMessage = inputMessage;
     setInputMessage("");
 
-    setConversationHistory(prev => ({
-      ...prev,
-      [selectedAgent.id]: newMessages,
-    }));
-
-    // Simulação de resposta da IA
-    setTimeout(() => {
-      const agentMessage: Message = {
-        id: `msg-${Date.now()}-agent`,
-        agentId: selectedAgent.id,
-        sender: "agent",
-        content: `Olá! Sou ${selectedAgent.name}, especialista em ${selectedAgent.role}. Recebi sua mensagem: "${userMessage.content}". Como posso ajudar você hoje?`,
-        timestamp: new Date(),
-      };
-      const updatedMessages = [...newMessages, agentMessage];
-      setMessages(updatedMessages);
-      setConversationHistory(prev => ({
+    try {
+      await sendMessage(userMessage);
+      // Atualizar histórico de conversa
+      setConversationHistory((prev) => ({
         ...prev,
-        [selectedAgent.id]: updatedMessages,
+        [selectedAgent.id]: messages,
       }));
-    }, 1000);
+    } catch (err) {
+      console.error("Erro ao enviar mensagem:", err);
+    }
   };
 
-  const agents = dbAgents.map((agent, idx) => ({
+  const agents: Agent[] = dbAgents.map((agent, idx) => ({
     id: agent.id.toString(),
     name: agent.name,
     role: agent.role,
@@ -95,9 +82,10 @@ export default function EquipeIA() {
     status: agent.status === "ativo" ? "online" : "offline",
   }));
 
-  const filteredAgents = agents.filter(a => 
-    a.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    a.role.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredAgents = agents.filter(
+    (a) =>
+      a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      a.role.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -124,7 +112,7 @@ export default function EquipeIA() {
             />
           </div>
         </div>
-        
+
         <ScrollArea className="flex-1">
           <div className="p-2 space-y-1">
             {loading ? (
@@ -137,9 +125,7 @@ export default function EquipeIA() {
                   key={agent.id}
                   onClick={() => handleSelectAgent(agent)}
                   className={`w-full text-left p-2 rounded-lg transition-all group ${
-                    selectedAgent?.id === agent.id
-                      ? "bg-blue-50 shadow-sm"
-                      : "hover:bg-slate-50"
+                    selectedAgent?.id === agent.id ? "bg-blue-50 shadow-sm" : "hover:bg-slate-50"
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -147,19 +133,23 @@ export default function EquipeIA() {
                       <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xl ${agent.color} shadow-sm`}>
                         {agent.avatar}
                       </div>
-                      <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${
-                        agent.status === 'online' ? 'bg-green-500' : 'bg-slate-300'
-                      }`} />
+                      <div
+                        className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${
+                          agent.status === "online" ? "bg-green-500" : "bg-slate-300"
+                        }`}
+                      />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-center">
-                        <p className={`text-xs font-bold truncate ${selectedAgent?.id === agent.id ? 'text-blue-700' : 'text-slate-900'}`}>
+                        <p
+                          className={`text-xs font-bold truncate ${
+                            selectedAgent?.id === agent.id ? "text-blue-700" : "text-slate-900"
+                          }`}
+                        >
                           {agent.name}
                         </p>
-                        {conversationHistory[agent.id] && (
-                          <span className="text-[9px] text-slate-400">
-                            {conversationHistory[agent.id].length}
-                          </span>
+                        {messages.length > 0 && selectedAgent?.id === agent.id && (
+                          <span className="text-[9px] text-slate-400">{messages.length}</span>
                         )}
                       </div>
                       <p className="text-[10px] text-slate-500 truncate font-medium">{agent.role}</p>
@@ -186,14 +176,22 @@ export default function EquipeIA() {
                   <h3 className="text-sm font-bold text-slate-900">{selectedAgent.name}</h3>
                   <div className="flex items-center gap-1.5">
                     <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                    <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Online</span>
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                      {isLoading ? "Pensando..." : "Online"}
+                    </span>
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400"><Search className="w-4 h-4" /></Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400"><Maximize2 className="w-4 h-4" /></Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400"><MoreHorizontal className="w-4 h-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400">
+                  <Search className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400">
+                  <Maximize2 className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400">
+                  <MoreHorizontal className="w-4 h-4" />
+                </Button>
               </div>
             </div>
 
@@ -208,13 +206,17 @@ export default function EquipeIA() {
                       </div>
                       <div className="space-y-1">
                         <h4 className="text-lg font-bold text-slate-900">Conversar com {selectedAgent.name}</h4>
-                        <p className="text-xs text-slate-500 max-w-xs mx-auto">
-                          {selectedAgent.description}
-                        </p>
+                        <p className="text-xs text-slate-500 max-w-xs mx-auto">{selectedAgent.description}</p>
                       </div>
                       <div className="grid grid-cols-2 gap-2 w-full max-w-md pt-4">
                         {["Analisar KPIs de hoje", "Resumo de sinistros", "Previsão de receita", "Alertas críticos"].map((suggestion, i) => (
-                          <button key={i} className="p-2 text-[11px] font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:border-blue-400 hover:text-blue-600 transition-all text-left shadow-sm">
+                          <button
+                            key={i}
+                            onClick={() => {
+                              setInputMessage(suggestion);
+                            }}
+                            className="p-2 text-[11px] font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:border-blue-400 hover:text-blue-600 transition-all text-left shadow-sm"
+                          >
                             {suggestion}
                           </button>
                         ))}
@@ -222,33 +224,62 @@ export default function EquipeIA() {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {messages.map((message) => (
+                      {messages.map((message, idx) => (
                         <div
-                          key={message.id}
-                          className={`flex items-start gap-3 ${message.sender === "user" ? "flex-row-reverse" : "flex-row"}`}
+                          key={idx}
+                          className={`flex items-start gap-3 ${message.role === "user" ? "flex-row-reverse" : "flex-row"}`}
                         >
-                          <div className={`w-7 h-7 rounded-full flex items-center justify-center text-sm ${message.sender === "user" ? "bg-blue-100 text-blue-600" : selectedAgent.color}`}>
-                            {message.sender === "user" ? "👤" : selectedAgent.avatar}
+                          <div
+                            className={`w-7 h-7 rounded-full flex items-center justify-center text-sm ${
+                              message.role === "user" ? "bg-blue-100 text-blue-600" : selectedAgent.color
+                            }`}
+                          >
+                            {message.role === "user" ? "👤" : selectedAgent.avatar}
                           </div>
-                          <div className={`flex-1 max-w-xs ${message.sender === "user" ? "text-right" : "text-left"}`}>
-                            <div className={`inline-block px-3 py-2 rounded-lg text-sm ${
-                              message.sender === "user"
-                                ? "bg-blue-600 text-white rounded-br-none"
-                                : "bg-slate-100 text-slate-900 rounded-bl-none"
-                            }`}>
+                          <div className={`flex-1 max-w-xs ${message.role === "user" ? "text-right" : "text-left"}`}>
+                            <div
+                              className={`inline-block px-3 py-2 rounded-lg text-sm ${
+                                message.role === "user"
+                                  ? "bg-blue-600 text-white rounded-br-none"
+                                  : "bg-slate-100 text-slate-900 rounded-bl-none"
+                              }`}
+                            >
                               {message.content}
                             </div>
-                            <p className="text-[10px] text-slate-400 mt-1">
-                              {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </p>
+                            {message.timestamp && (
+                              <p className="text-[10px] text-slate-400 mt-1">
+                                {new Date(message.timestamp).toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </p>
+                            )}
                           </div>
                         </div>
                       ))}
+                      {isLoading && (
+                        <div className="flex items-start gap-3">
+                          <div className={`w-7 h-7 rounded-full flex items-center justify-center text-sm ${selectedAgent.color}`}>
+                            {selectedAgent.avatar}
+                          </div>
+                          <div className="flex items-center gap-1 px-3 py-2 rounded-lg bg-slate-100">
+                            <Loader className="w-4 h-4 animate-spin text-slate-500" />
+                            <span className="text-sm text-slate-500">Processando...</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
               </ScrollArea>
             </div>
+
+            {/* Error Display */}
+            {error && (
+              <div className="px-4 py-2 bg-red-50 border-t border-red-200 text-xs text-red-600">
+                {error}
+              </div>
+            )}
 
             {/* Input Area */}
             <div className="h-16 border-t bg-white px-4 py-3 flex items-center gap-2">
@@ -266,16 +297,18 @@ export default function EquipeIA() {
                     handleSendMessage();
                   }
                 }}
+                disabled={isLoading}
               />
               <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600">
                 <Smile className="w-4 h-4" />
               </Button>
               <Button
                 size="icon"
-                className="h-8 w-8 bg-blue-600 hover:bg-blue-700 text-white"
+                className="h-8 w-8 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
                 onClick={handleSendMessage}
+                disabled={isLoading || !inputMessage.trim()}
               >
-                <Send className="w-4 h-4" />
+                {isLoading ? <Loader className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               </Button>
             </div>
           </>
