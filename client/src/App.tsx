@@ -21,6 +21,7 @@ import Rastreamento from "./pages/setores/Rastreamento";
 import Marketing from "./pages/setores/Marketing";
 import Relacionamento from "./pages/setores/Relacionamento";
 import Kanban from "./pages/Kanban";
+import DiagnosticDashboard from "./pages/DiagnosticDashboard";
 import Login from "./pages/Login";
 import { useAuth } from "./_core/hooks/useAuth";
 
@@ -42,6 +43,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
+      <Route path="/diagnostic" component={() => <ProtectedRoute component={DiagnosticDashboard} />} />
       <Route path="/" component={() => <DashboardLayout><ProtectedRoute component={Dashboard} /></DashboardLayout>} />
       <Route path="/agents" component={() => <DashboardLayout><ProtectedRoute component={Agents} /></DashboardLayout>} />
       <Route path="/whatsapp" component={() => <DashboardLayout><ProtectedRoute component={WhatsAppDispatcher} /></DashboardLayout>} />
