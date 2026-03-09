@@ -1,6 +1,7 @@
-import { supabase } from "@/_core/supabase";
+"use client";
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "./useAuth";
+import { supabase } from "@/_core/supabase";
 
 export interface DashboardStats {
   // Período Atual
